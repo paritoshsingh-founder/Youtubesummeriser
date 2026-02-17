@@ -29,13 +29,14 @@
 
       <div class="video-section">
         <div class="video-wrapper">
-          <div id="yt-player"></div>
+          <iframe id="video-player" src="" frameborder="0" allowfullscreen
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture">
+          </iframe>
         </div>
       </div>
     </div>
   </div>
 
-  <script src="https://www.youtube.com/iframe_api"></script>
   <script>
     const card = document.getElementById("card");
     const cardLabel = document.getElementById("card-label");
@@ -45,10 +46,11 @@
     const prevBtn = document.getElementById("prev-btn");
     const nextBtn = document.getElementById("next-btn");
     const dotsContainer = document.getElementById("dots");
+    const videoPlayer = document.getElementById("video-player");
 
     let cards = [];
     let currentIndex = 0;
-    let player = null;
+    let videoId = null;
 
     // Load data from sessionStorage
     const summary = sessionStorage.getItem("summary");
@@ -57,6 +59,11 @@
     if (!summary) {
       window.location.href = "/";
     } else {
+      videoId = extractVideoId(videoUrl);
+      if (videoId) {
+        videoPlayer.src = "https://www.youtube.com/embed/" + videoId;
+      }
+
       cards = parseSummary(summary);
       currentIndex = 0;
       renderCard();
@@ -68,25 +75,11 @@
       return match ? match[1] : null;
     }
 
-    // YouTube IFrame Player API
-    function onYouTubeIframeAPIReady() {
-      const videoId = extractVideoId(videoUrl);
-      if (!videoId) return;
-      player = new YT.Player("yt-player", {
-        width: "100%",
-        height: "100%",
-        videoId: videoId,
-        playerVars: { rel: 0, enablejsapi: 1 },
-      });
-    }
-    window.onYouTubeIframeAPIReady = onYouTubeIframeAPIReady;
-
-    // Play button
+    // Play button — reloads iframe at the chapter timestamp
     playBtn.addEventListener("click", () => {
       const c = cards[currentIndex];
-      if (player && c.timestamp !== null) {
-        player.seekTo(c.timestamp, true);
-        player.playVideo();
+      if (videoId && c.timestamp !== null) {
+        videoPlayer.src = "https://www.youtube.com/embed/" + videoId + "?start=" + c.timestamp + "&autoplay=1";
       }
     });
 
