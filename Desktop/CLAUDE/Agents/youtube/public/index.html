@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>YouTube Video Summariser</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="container">
+    <h1>YouTube Video Summariser</h1>
+    <p class="subtitle">Paste a YouTube link and get an AI-powered summary</p>
+
+    <div class="input-group">
+      <input type="text" id="youtube-url" placeholder="Paste YouTube link here..." />
+      <button id="generate-btn">Generate Summary</button>
+    </div>
+
+    <div id="loading" class="loading hidden">
+      <div class="spinner"></div>
+      <p>Generating summary...</p>
+    </div>
+
+    <div id="error" class="error hidden">
+      <p id="error-text"></p>
+    </div>
+  </div>
+
+  <script>
+    const input = document.getElementById("youtube-url");
+    const btn = document.getElementById("generate-btn");
+    const loading = document.getElementById("loading");
+    const error = document.getElementById("error");
+    const errorText = document.getElementById("error-text");
+
+    btn.addEventListener("click", async () => {
+      const url = input.value.trim();
+
+      if (!url) {
+        showError("Please paste a YouTube link.");
+        return;
+      }
+
+      loading.classList.remove("hidden");
+      error.classList.add("hidden");
+      btn.disabled = true;
+
+      try {
+        const res = await fetch("/summarise", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ url }),
+        });
+
+        const data = await res.json();
+
+        if (!res.ok) {
+          showError(data.error || "Something went wrong.");
+          return;
+        }
+
+        if (data.summary) {
+          sessionStorage.setItem("summary", data.summary);
+          sessionStorage.setItem("videoUrl", url);
+          window.location.href = "/results.html";
+        } else {
+          showError("Failed to generate summary.");
+        }
+      } catch (err) {
+        showError("Failed to connect to the server.");
+      } finally {
+        loading.classList.add("hidden");
+        btn.disabled = false;
+      }
+    });
+
+    function showError(msg) {
+      errorText.textContent = msg;
+      error.classList.remove("hidden");
+      loading.classList.add("hidden");
+      btn.disabled = false;
+    }
+  </script>
+</body>
+</html>
